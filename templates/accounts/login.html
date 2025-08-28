@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h4 class="mb-3">Log In</h4>
+  <form method="post" class="vstack gap-2">
+    {% csrf_token %}
+    <input type="email" name="email" class="form-control" placeholder="Email address" required>
+    <input type="password" name="password" class="form-control" placeholder="Password" required>
+    <button class="btn btn-primary">Log In</button>
+  </form>
+{% endblock %}

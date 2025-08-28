@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h4 class="mb-3">Upload</h4>
+
+  <form method="post" enctype="multipart/form-data" class="vstack gap-2">
+    {% csrf_token %}
+    <div>
+      <label class="form-label">File (MP4, MOV, JPG, PNG)</label>
+      <input type="file" name="media" class="form-control" required>
+    </div>
+    <div>
+      <label class="form-label">Description</label>
+      <textarea name="description" rows="2" placeholder="Add a description (optional)" class="form-control"></textarea>
+    </div>
+    {% if form.media.errors %}<div class="text-danger small">{{ form.media.errors|striptags }}</div>{% endif %}
+    <button class="btn btn-primary">Post</button>
+  </form>
+{% endblock %}

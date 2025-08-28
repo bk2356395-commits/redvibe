@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h4 class="mb-3">Admin Dashboard</h4>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header">Reported Posts</div>
+        <div class="card-body">
+          <div class="vstack gap-3">
+            {% for r in reports %}
+              <div class="border rounded p-2">
+                <div class="d-flex gap-2">
+                  {% if r.post.thumbnail %}
+                    <img src="{{ r.post.thumbnail.url }}" width="96" height="64" class="object-fit-cover rounded" alt="">
+                  {% endif %}
+                  <div class="flex-grow-1">
+                    <div class="small">Reason: <b>{{ r.reason }}</b> • Reporter: {{ r.reporter.username }} • {{ r.created_at|date:"M d, Y H:i" }}</div>
+                    <div class="small text-muted">Post #{{ r.post.id }} by {{ r.post.creator.username }}</div>
+                    {% if r.details %}<div class="small mt-1">{{ r.details }}</div>{% endif %}
+                    <form method="post" class="d-flex gap-2 mt-2">
+                      {% csrf_token %}
+                      <input type="hidden" name="post_id" value="{{ r.post.id }}">
+                      <button name="action" value="view_post" class="btn btn-sm btn-outline-secondary">View Post</button>
+                      <button name="action" value="delete_post" class="btn btn-sm btn-danger">Delete Post</button>
+                      <button name="action" value="suspend_user" class="btn btn-sm btn-warning">Suspend User</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-muted">No reports.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header">Action logs</div>
+        <div class="card-body">
+          <div class="vstack gap-2 small">
+            {% for log in logs %}
+              <div>• {{ log.created_at|date:"M d, Y H:i" }} — {{ log.action }} (by {{ log.admin.username }})</div>
+            {% empty %}
+              <div class="text-muted">Action logs will appear here.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

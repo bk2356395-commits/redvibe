@@ -1,0 +1,8 @@
+body { background: #0b0b0c; color: #eaeaea; }
+.navbar { border-bottom: 1px solid rgba(255,255,255,0.1); }
+.card { background: #151518; border: 1px solid #24242a; }
+.form-control, .form-check-input, .btn { border-radius: 12px; }
+.object-fit-cover { object-fit: cover; }
+.object-fit-contain { object-fit: contain; }
+footer a { color: #888; }
+.ratio { background:#0f0f12; }

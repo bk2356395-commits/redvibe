@@ -1,0 +1,57 @@
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <a href="{% url 'profile' post.creator.id %}" class="fw-semibold text-decoration-none">{{ post.creator.first_name|default:post.creator.username }}</a>
+        <span class="text-muted small ms-2">{{ post.created_at|date:"M d, Y H:i" }}</span>
+      </div>
+      {% if user.is_authenticated and user.id != post.creator.id %}
+        <button class="btn btn-sm btn-outline-primary follow-btn"
+                data-user="{{ post.creator.id }}">
+          {% if post.creator.followers.filter(follower=user).exists %}
+            Unfollow
+          {% else %}
+            Follow
+          {% endif %}
+        </button>
+      {% endif %}
+    </div>
+
+    <p class="mt-2 mb-2">{{ post.description }}</p>
+
+    <div class="ratio ratio-16x9 bg-dark-subtle rounded overflow-hidden">
+      {% if post.media_type == 'image' %}
+        <img src="{{ post.media.url }}" class="w-100 h-100 object-fit-contain" alt="">
+      {% else %}
+        <video class="w-100 h-100" controls poster="{{ post.thumbnail.url|default:'' }}">
+          <source src="{{ post.media.url }}" type="video/mp4">
+          <source src="{{ post.media.url }}" type="video/quicktime">
+        </video>
+      {% endif %}
+    </div>
+
+    <div class="d-flex align-items-center gap-2 mt-2">
+      {% with liked=post.likes_set.filter(user=user).exists count=post.likes_set.count %}
+      <button class="btn btn-sm btn-outline-danger like-btn" data-id="{{ post.id }}">
+        {% if liked %}Unlike{% else %}❤️ Like{% endif %}
+      </button>
+      <span class="small text-muted like-count" data-id="{{ post.id }}">{{ count }}</span>
+      {% endwith %}
+
+      <span class="ms-3 small">💬 Comments ({{ post.comments.count }})</span>
+
+      <button class="btn btn-sm btn-outline-secondary ms-auto report-btn" data-id="{{ post.id }}">🚩 Report</button>
+    </div>
+
+    {% if user.is_authenticated %}
+      <form class="comment-form mt-2" data-id="{{ post.id }}">
+        <div class="input-group">
+          <input type="text" name="content" class="form-control" placeholder="Write a comment..." required>
+          <button class="btn btn-primary" type="submit">Post Comment</button>
+        </div>
+      </form>
+    {% else %}
+      <div class="text-muted small mt-2">Log in to comment.</div>
+    {% endif %}
+  </div>
+</div>

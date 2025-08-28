@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h4 class="mb-3">Sign Up</h4>
+  <form method="post" class="vstack gap-2">
+    {% csrf_token %}
+    <input type="text" name="name" class="form-control" placeholder="Enter your full name" required>
+    <input type="email" name="email" class="form-control" placeholder="example@mail.com" required>
+    <input type="password" name="password" class="form-control" placeholder="Create a strong password" minlength="6" required>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="1" id="age" name="age_confirm" required>
+      <label class="form-check-label" for="age">I confirm I am 18 or older</label>
+    </div>
+    <button class="btn btn-primary">Sign Up</button>
+  </form>
+{% endblock %}
