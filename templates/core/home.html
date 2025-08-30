@@ -2,6 +2,18 @@
 {% load static %}
 
 {% block content %}
+<nav>
+    <a href="{% url 'home' %}">Home</a> |
+    {% if user.is_authenticated %}
+        <a href="{% url 'upload' %}">Upload</a> |
+        <a href="{% url 'profile_view' %}">Profile</a> |
+        <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a> |
+        <a href="{% url 'signup' %}">Sign Up</a>
+    {% endif %}
+</nav>
+
 <h1>Home</h1>
 
 {% for post in posts %}
@@ -13,13 +25,11 @@
     {% else %}
         <video controls class="post-media">
             <source src="{{ post.media.url }}" type="video/mp4">
-            Your browser does not support the video tag.
         </video>
     {% endif %}
 
     <p>{{ post.description }}</p>
 
-    <!-- Follow / Following Button -->
     {% if user.is_authenticated %}
         {% if post.is_following_creator %}
             <button class="btn-following">Following</button>
@@ -30,10 +40,8 @@
         <p><a href="{% url 'login' %}">Login to follow</a></p>
     {% endif %}
 
-    <!-- Likes & Comments -->
     <p>Likes: {{ post.likes_set.count }}</p>
     <p>Comments: {{ post.comments.count }}</p>
-
 </div>
 <hr>
 {% empty %}
