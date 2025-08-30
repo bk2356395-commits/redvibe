@@ -1,51 +1,83 @@
-{% extends "base.html" %}
+{% extends 'core/base.html' %}
 {% load static %}
 
 {% block content %}
-<nav>
-    <a href="{% url 'home' %}">Home</a> |
-    {% if user.is_authenticated %}
-        <a href="{% url 'upload' %}">Upload</a> |
-        <a href="{% url 'profile_view' %}">Profile</a> |
-        <a href="{% url 'logout' %}">Logout</a>
-    {% else %}
-        <a href="{% url 'login' %}">Login</a> |
-        <a href="{% url 'signup' %}">Sign Up</a>
-    {% endif %}
-</nav>
-
-<h1>Home</h1>
-
-{% for post in posts %}
-<div class="post-card">
-    <h2>{{ post.creator.username }}</h2>
-
-    {% if post.media_type == "image" %}
-        <img src="{{ post.media.url }}" alt="Post Image" class="post-media"/>
-    {% else %}
-        <video controls class="post-media">
-            <source src="{{ post.media.url }}" type="video/mp4">
-        </video>
-    {% endif %}
-
-    <p>{{ post.description }}</p>
-
-    {% if user.is_authenticated %}
-        {% if post.is_following_creator %}
-            <button class="btn-following">Following</button>
+<div class="container">
+    <!-- Navigation -->
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'upload' %}">Upload</a>
+            <a href="{% url 'profile' user.id %}">Profile</a>
+            <a href="{% url 'logout' %}">Logout</a>
         {% else %}
-            <button class="btn-follow">Follow</button>
+            <a href="{% url 'login' %}">Login</a>
         {% endif %}
+    </nav>
+
+    <hr>
+
+    <!-- Posts -->
+    {% if posts %}
+        {% for post in posts %}
+            <div class="post">
+                <p><strong>{{ post.creator.username }}</strong></p>
+                {% if post.media_type == 'image' %}
+                    <img src="{{ post.media.url }}" alt="Image" width="300">
+                {% else %}
+                    <video width="300" controls>
+                        <source src="{{ post.media.url }}" type="video/mp4">
+                    </video>
+                {% endif %}
+                <p>{{ post.description }}</p>
+
+                <!-- Like Button -->
+                <form method="POST" class="like-form" data-post-id="{{ post.id }}">
+                    {% csrf_token %}
+                    <button type="submit">
+                        {% if user.is_authenticated and post.likes_set.filter(user=user).exists %}
+                            ❤️
+                        {% else %}
+                            🤍
+                        {% endif %}
+                    </button>
+                    <span>{{ post.likes_set.count }}</span>
+                </form>
+
+                <!-- Follow Button -->
+                {% if user.is_authenticated and post.creator != user %}
+                    <form method="POST" class="follow-form" data-user-id="{{ post.creator.id }}">
+                        {% csrf_token %}
+                        <button type="submit">
+                            {% if user.is_authenticated and post.creator.followers.filter(follower=user).exists %}
+                                Following
+                            {% else %}
+                                Follow
+                            {% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+
+                <!-- Comments -->
+                <div class="comments">
+                    {% for comment in post.comments.all %}
+                        <p><strong>{{ comment.user.username }}:</strong> {{ comment.content }}</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Add Comment -->
+                {% if user.is_authenticated %}
+                    <form method="POST" class="comment-form" data-post-id="{{ post.id }}">
+                        {% csrf_token %}
+                        <input type="text" name="content" placeholder="Add a comment...">
+                        <button type="submit">Comment</button>
+                    </form>
+                {% endif %}
+            </div>
+            <hr>
+        {% endfor %}
     {% else %}
-        <p><a href="{% url 'login' %}">Login to follow</a></p>
+        <p>No posts found.</p>
     {% endif %}
-
-    <p>Likes: {{ post.likes_set.count }}</p>
-    <p>Comments: {{ post.comments.count }}</p>
 </div>
-<hr>
-{% empty %}
-<p>No posts found.</p>
-{% endfor %}
-
 {% endblock %}

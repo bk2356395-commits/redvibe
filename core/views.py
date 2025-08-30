@@ -7,22 +7,10 @@ from django.contrib.auth.models import User
 from .models import Post, Like, Comment, Follow, Report, AdminActionLog
 from .forms import UploadForm, CommentForm, ReportForm
 
-
-# ---------- HOME VIEW FIXED ----------
 def home(request):
-    user = request.user
-    posts = Post.objects.select_related('creator').prefetch_related('comments', 'likes_set').all()
-
-    # हर post के लिए check करें कि user follow करता है या नहीं
-    for post in posts:
-        post.is_following_creator = False
-        if user.is_authenticated:
-            post.is_following_creator = post.creator.followers.filter(follower=user).exists()
-
+    posts = Post.objects.select_related('creator').prefetch_related('comments','likes_set').all()
     return render(request, 'core/home.html', {'posts': posts})
 
-
-# ---------- UPLOAD VIEW ----------
 @login_required
 def upload_view(request):
     if request.method == 'POST':
@@ -30,12 +18,12 @@ def upload_view(request):
         if form.is_valid():
             f = form.cleaned_data['media']
             ext = f.name.lower()
-            media_type = 'image' if ext.endswith(('.jpg', '.jpeg', '.png')) else 'video'
+            media_type = 'image' if ext.endswith(('.jpg','.jpeg','.png')) else 'video'
             post = Post.objects.create(
                 creator=request.user,
                 media=f,
                 media_type=media_type,
-                description=form.cleaned_data.get('description', '').strip()
+                description=form.cleaned_data.get('description','').strip()
             )
             messages.success(request, "Upload successful!")
             return redirect('home')
@@ -45,8 +33,6 @@ def upload_view(request):
         form = UploadForm()
     return render(request, 'core/upload.html', {'form': form})
 
-
-# ---------- PROFILE VIEW ----------
 def profile_view(request, user_id=None):
     if user_id:
         user = get_object_or_404(User, pk=user_id)
@@ -55,7 +41,6 @@ def profile_view(request, user_id=None):
             return redirect('login')
         user = request.user
     posts = Post.objects.filter(creator=user)
-    # Check following
     following = False
     if request.user.is_authenticated and user != request.user:
         following = Follow.objects.filter(follower=request.user, following=user).exists()
@@ -68,8 +53,6 @@ def profile_view(request, user_id=None):
     }
     return render(request, 'core/profile.html', {'profile_user': user, 'posts': posts, 'stats': stats})
 
-
-# ---------- TOGGLE LIKE ----------
 @login_required
 def toggle_like(request, post_id):
     if request.method != 'POST':
@@ -83,8 +66,6 @@ def toggle_like(request, post_id):
         liked = True
     return JsonResponse({'liked': liked, 'count': post.likes_set.count()})
 
-
-# ---------- ADD COMMENT ----------
 @login_required
 def add_comment(request, post_id):
     if request.method != 'POST':
@@ -96,8 +77,6 @@ def add_comment(request, post_id):
         return JsonResponse({'ok': True, 'count': post.comments.count()})
     return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
-
-# ---------- TOGGLE FOLLOW ----------
 @login_required
 def toggle_follow(request, user_id):
     if request.method != 'POST':
@@ -113,8 +92,6 @@ def toggle_follow(request, user_id):
         following = True
     return JsonResponse({'ok': True, 'following': following})
 
-
-# ---------- REPORT POST ----------
 @login_required
 def report_post(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
@@ -125,22 +102,18 @@ def report_post(request, post_id):
                 post=post,
                 reporter=request.user,
                 reason=form.cleaned_data['reason'],
-                details=form.cleaned_data.get('details', '').strip()
+                details=form.cleaned_data.get('details','').strip()
             )
             return JsonResponse({'ok': True, 'message': "Thank you for your report. Our team will review it shortly."})
         return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
     return HttpResponseForbidden()
 
-
-# ---------- STAFF REQUIRED DECORATOR ----------
 def staff_required(view):
     return user_passes_test(lambda u: u.is_staff)(view)
 
-
-# ---------- ADMIN DASHBOARD ----------
 @staff_required
 def admin_dashboard(request):
-    reports = Report.objects.select_related('post', 'reporter', 'post__creator').order_by('-created_at')
+    reports = Report.objects.select_related('post','reporter','post__creator').order_by('-created_at')
     logs = AdminActionLog.objects.select_related('admin').order_by('-created_at')[:50]
 
     if request.method == 'POST':
@@ -149,8 +122,7 @@ def admin_dashboard(request):
         if action and post_id:
             post = get_object_or_404(Post, pk=post_id)
             if action == 'delete_post':
-                AdminActionLog.objects.create(admin=request.user,
-                                              action=f"Deleted post #{post.id} by {post.creator.username}")
+                AdminActionLog.objects.create(admin=request.user, action=f"Deleted post #{post.id} by {post.creator.username}")
                 post.delete()
                 messages.success(request, "Post deleted.")
             elif action == 'suspend_user':
@@ -160,13 +132,11 @@ def admin_dashboard(request):
                 AdminActionLog.objects.create(admin=request.user, action=f"Suspended user {user.username}")
                 messages.success(request, "User suspended.")
             elif action == 'view_post':
-                return redirect('home')  # simple: send to home; you can anchor by id in UI
+                return redirect('home')
         return redirect('admin_dashboard')
 
     return render(request, 'core/admin_dashboard.html', {'reports': reports, 'logs': logs})
 
-
-# ---------- CONFIRM AGE ----------
 @login_required
 def confirm_age(request):
     request.session['show_age_modal'] = False
