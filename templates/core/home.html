@@ -1,16 +1,43 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-  <h3 class="mb-3">Welcome to AdultShare - Your 18+ Video Sharing Platform</h3>
+<h1>Home</h1>
 
-  {% if not user.is_authenticated %}
-    <p><a class="btn btn-warning" href="{% url 'signup' %}">Create an account</a> or <a href="{% url 'login' %}">log in</a> to like, comment, follow, and upload.</p>
-  {% endif %}
+{% for post in posts %}
+<div class="post-card">
+    <h2>{{ post.creator.username }}</h2>
 
-  <div class="vstack gap-3">
-    {% for post in posts %}
-      {% include 'core/post_card.html' with post=post %}
-    {% empty %}
-      <div class="alert alert-secondary">No posts yet. Be the first to upload!</div>
-    {% endfor %}
-  </div>
+    {% if post.media_type == "image" %}
+        <img src="{{ post.media.url }}" alt="Post Image" class="post-media"/>
+    {% else %}
+        <video controls class="post-media">
+            <source src="{{ post.media.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    {% endif %}
+
+    <p>{{ post.description }}</p>
+
+    <!-- Follow / Following Button -->
+    {% if user.is_authenticated %}
+        {% if post.is_following_creator %}
+            <button class="btn-following">Following</button>
+        {% else %}
+            <button class="btn-follow">Follow</button>
+        {% endif %}
+    {% else %}
+        <p><a href="{% url 'login' %}">Login to follow</a></p>
+    {% endif %}
+
+    <!-- Likes & Comments -->
+    <p>Likes: {{ post.likes_set.count }}</p>
+    <p>Comments: {{ post.comments.count }}</p>
+
+</div>
+<hr>
+{% empty %}
+<p>No posts found.</p>
+{% endfor %}
+
 {% endblock %}
